@@ -12,10 +12,13 @@ class Octree:
         # if it splits we will change it render to false and no longer leaf node
         pass
 
-    def Search(self, Node):
+    def Search(self, Point1, Point2):
+        # we will be searching for a volume defined by two points
+        # that volume will be approximated e.g our cube covers 96% of the region defined by the 2 points
+        # will return node
         pass
 
-    def Delete(self, Node):
+    def Delete(self, Point):
 
         pass
 
