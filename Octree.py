@@ -8,7 +8,8 @@ class Octree:
         self.Total_Nodes = 1
 
     def Split_Node(self):
-        self.Total_Nodes += 8
+        #self.Total_Nodes += 8
+        # if it splits we will change it render to false and no longer leaf node
         pass
 
     def Search(self, Node):
@@ -33,13 +34,15 @@ class Point:
 class Node:
 
     def __init__(self, Point, Data=None, Render=True):
-        self.Points = Point
+        self.Points = Point(Point)
         self.Data = Data
         self.Render = True
+        self.LeafNode = True
         self.Children = [None, None, None, None, None, None, None, None, ]
 
-    def Change_Render_State(self, State):
-        self.Render = State
+    def Change_Render_State(self):
+        if not self.LeafNode:
+            self.Render = False
 
     def Change_Data(self, Data):
         self.Data = Data
