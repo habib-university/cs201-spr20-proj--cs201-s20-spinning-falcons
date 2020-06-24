@@ -1,5 +1,37 @@
+class Node:
+
+    def __init__(self, Point1, Point2, Data=None, Render=True):
+        self.Top_Left_Front = Point(Point1)
+        self.Back_Right_Bottom = Point(Point2)
+        self.Data = Data
+        self.Render = Render
+        self.LeafNode = True
+        self.Children = [None, None, None, None, None, None, None, None]
+
+    def Change_Render_State(self):
+        if not self.LeafNode:
+            self.Render = False
+
+    def Change_Data(self, Data):
+        self.Data = Data
+
+
+class Point:
+
+    def __init__(self, x=None, y=None, z=None):
+        self.x = x
+        self.y = y
+        self.z = z
+
+
 class Octree:
-    def __init__(self, x, y, z, x1, y1, z1):
+    def __init__(self, Point_1 = None, Point_2 = None):
+
+        if Point_1 == None and Point_2 == None:
+            self.Root_Node = Point()
+        
+        elif Point_2 == None and Point_1 != None:
+            self.Root_Node = Point(Point_1.x, Point_1.y, Point_1.z)
 
         self.Root_Node = Node((x, y, z), (x1, y1, z1))
         self.Height = 0
@@ -14,7 +46,7 @@ class Octree:
             "TLB": 4,   # top left back
             'TRB': 5,   # top right back
             'BRB': 6,   # bottom right back
-            'BLB': 7
+            'BLB': 7    # bottom left back
         }
 
     def Split_Node(self):
@@ -128,30 +160,9 @@ class Octree:
         
 
 
-class Point:
-
-    def __init__(self, x=-1, y=-1, z=-1):
-        self.x = x
-        self.y = y
-        self.z = z
 
 
-class Node:
 
-    def __init__(self, Point1, Point2, Data=None, Render=True):
-        self.Top_Left_Front = Point(Point1)
-        self.Back_Right_Bottom = Point(Point2)
-        self.Data = Data
-        self.Render = Render
-        self.LeafNode = True
-        self.Children = [None, None, None, None, None, None, None, None]
-
-    def Change_Render_State(self):
-        if not self.LeafNode:
-            self.Render = False
-
-    def Change_Data(self, Data):
-        self.Data = Data
 
 
 ####### Helper Functions #######
