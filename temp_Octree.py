@@ -6,7 +6,6 @@ class Node:
         self.Data = Data
         self.Render = Render
         self.LeafNode = True
-        self.Children = [None, None, None, None, None, None, None, None]
 
     def Change_Render_State(self):
         if not self.LeafNode:
@@ -27,13 +26,23 @@ class Point:
 class Octree:
     def __init__(self, Point_1 = None, Point_2 = None):
 
+        self.Children = {'TLF':None, 'TRF': None, 'BRF':None, 'BLF' :None,'TLB': None,'TRB': None,
+        'BRB': None,'BLB': None}
+
+        self.Top_Left_Front = None
+        self.Bottom_Right_Back = None
+
         if Point_1 == None and Point_2 == None:
             self.Root_Node = Point()
         
         elif Point_2 == None and Point_1 != None:
             self.Root_Node = Point(Point_1.x, Point_1.y, Point_1.z)
+        
+        elif Point_1 != None and Point_2 != None:
+            self.Top_Left_Front = Point_1 
+            self.Bottom_Right_Back = Point_2
 
-        self.Root_Node = Node((x, y, z), (x1, y1, z1))
+        
         self.Height = 0
         self.Max_Size = 0  # size to not be exceeed
         self.Total_Nodes = 1
@@ -120,38 +129,77 @@ class Octree:
             return False
 
         
-            Mid_Point_x = (u.Top_Left_Front.x + u.Back_Right_Bottom.x) // 2
-            Mid_Point_y = (u.Top_Left_Front.y + u.Back_Right_Bottom.y) // 2
-            Mid_Point_z = (u.Top_Left_Front.z + u.Back_Right_Bottom.z) // 2
+        Mid_Point_x = (u.Top_Left_Front.x + u.Back_Right_Bottom.x) // 2
+        Mid_Point_y = (u.Top_Left_Front.y + u.Back_Right_Bottom.y) // 2
+        Mid_Point_z = (u.Top_Left_Front.z + u.Back_Right_Bottom.z) // 2
 
         
-            if (Point1.x <= Mid_Point_x):
-                if(Point1.y <= Mid_Point_y):
-                    if (Point1.z <= Mid_Point_z):
-                        Position = 'TLF'
-                    else:
-                        Position = 'TLB'
+        if (Point1.x <= Mid_Point_x):
+            if(Point1.y <= Mid_Point_y):
+                if (Point1.z <= Mid_Point_z):
+                    Position = 'TLF'
                 else:
-                    if(Point1.z <= Mid_Point_z):
-                        Position = 'BLF'
-                    else:
-                        Position = 'BLB'
+                    Position = 'TLB'
             else:
-                if(Point1.y <= Mid_Point_y):
-                    if (Point1.z <= Mid_Point_z):
-                        Position = 'TRF'
-                    else:
-                        Position = 'TRB'
+                if(Point1.z <= Mid_Point_z):
+                    Position = 'BLF'
                 else:
-                    if (Point1.z <= Mid_Point_z):
-                        Position = 'BRF'
-                    else:
-                        Position = 'BRB'
+                    Position = 'BLB'
+        else:
+            if(Point1.y <= Mid_Point_y):
+                if (Point1.z <= Mid_Point_z):
+                    Position = 'TRF'
+                else:
+                    Position = 'TRB'
+            else:
+                if (Point1.z <= Mid_Point_z):
+                    Position = 'BRF'
+                else:
+                    Position = 'BRB'
             
-            if (not u.LeafNode):
-                if u.Children[self.Position_Map[Position]] != None:
+        if (self.Children[Position] != None):
+            if self.Root_Node == None:
+                self.Children[Position].Add(Point1)
+            else:
+                temp_point:Point = self.Children[Position].Root_Node
+                self.Children[Position].Root_Node = None
 
-                    self.Add( Point1, u.Children[self.Position_Map[Position]])
+                if(Position == 'TLF'):
+                    self.Children[Position] = Octree(self.Top_Left_Front, Point(Mid_Point_x, Mid_Point_y, Mid_Point_z))
+
+                elif Position == 'TLB':
+                    self.Children[Position] = Octree(Point(Mid_Point_x + 1, self.Top_Left_Front.y, self.Top_Left_Front.z),
+                    Point(self.Bottom_Right_Back.x, Mid_Point_y, Mid_Point_z))
+
+                elif Position == 'BRF':
+                    self.Children[Position] = Octree(Point(Mid_Point_x + 1, Mid_Point_y + 1, self.Top_Left_Front.z),
+                    Point(self.Bottom_Right_Back.x, self.Bottom_Right_Back.y, Mid_Point_z))
+            
+                elif Position == 'BLF':
+                    self.Children[Position] = Octree(Point(self.Top_Left_Front.x, Mid_Point_y+1, self.Top_Left_Front.z),
+                    Point(Mid_Point_x, self.Bottom_Right_Back.y, Mid_Point_z))
+
+                elif Position == 'TLB':
+                    self.Children[Position] = Octree(Point(self.Top_Left_Front.x, self.Top_Left_Front.y, Mid_Point_z + 1),
+                    Point(Mid_Point_x, Mid_Point_y, self.Bottom_Right_Back.z))
+
+                elif Position == 'TRB':
+                    self.Children[Position] = Octree(Point(Mid_Point_x + 1, self.Top_Left_Front.y, Mid_Point_z +1),
+                    Point(self.Bottom_Right_Back.x, Mid_Point_y, self.Bottom_Right_Back.z))
+
+                elif Position == 'BRB':
+                    self.Children[Position] = Octree(Point(Mid_Point_x + 1, Mid_Point_y+1, Mid_Point_z +1),
+                    Point(self.Bottom_Right_Back.x, self.Bottom_Right_Back.y, self.Bottom_Right_Back.z))
+
+                elif Position == 'BLB':
+                    self.Children[Position] = Octree(Point(self.Top_Left_Front.x, Mid_Point_y+1, Mid_Point_z +1),
+                    Point(Mid_Point_x, self.Bottom_Right_Back.y, self.Bottom_Right_Back.z))
+
+                self.Children[Position].Add(temp_point)
+                self.Children[Position].Add(Point1)
+
+        if self.Children[Position] == None:
+            self.Children[Position] = Octree(Point1)
 
             # arrived at closest leaf node
                 
@@ -165,9 +213,6 @@ class Octree:
 
 
 
-
-
-
 ####### Helper Functions #######
 
 def check_bounds(p1: Point, u: Node):
@@ -177,3 +222,5 @@ def check_bounds(p1: Point, u: Node):
         return False
 
     return True
+
+
