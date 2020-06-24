@@ -1,6 +1,6 @@
 #import bpy
 
-with open(r"Handgun_obj.txt", "r") as file1:
+with open("C:\\users\\moiz_moid\\downloads\\airboat.obj", "r") as file1:
     # file2 = open("Point_cloud.txt", "a")
 
     vertices = []
@@ -21,6 +21,11 @@ with open(r"Handgun_obj.txt", "r") as file1:
             faces.append(face_tuple)
     # file1.close()
 
+with open("C:\\users\\moiz_moid\\desktop\\text1.txt", "w") as file2:
+    for i in vertices:
+        file2.write("v "+" ".join([str(_) for _ in i])+"\n")
+    for i in faces:
+        file2.write("f "+" ".join([str(_) for _ in i])+"\n")
 
 # print(vertices[:])
 # print(len(vertices))
