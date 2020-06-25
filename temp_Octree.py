@@ -125,17 +125,56 @@ class Octree:
         vertices = []
         if self.Root_Node == None and self.Root_Node == (None, None, None):
             return vertices
+
         elif type(self.Root_Node) == Point:
             return [(self.Root_Node.x, self.Root_Node.y, self.Root_Node.z)]
+
         elif self.Root_Node == None and self.Top_Left_Front and self.Bottom_Right_Back:
             for key in self.Children:
                 vertices += self.Children[key].getVertices()
             return vertices
 
-    def Add(self, Point1):
-        region = False
-        # if u == None:
-        #     u = self.Root_Node
+    def getRegionLimits(self, Position: str) -> (Point, Point):
+        if(Position == 'TLF'):
+            return (self.Top_Left_Front, Point((self.Top_Left_Front.x + self.Bottom_Right_Back.x)/2, (self.Top_Left_Front.y + self.Bottom_Right_Back.y)/2, (self.Top_Left_Front.z + self.Bottom_Right_Back.z)/2))
+
+        elif Position == 'TLB':
+            return (Point(self.Top_Left_Front.x, (self.Top_Left_Front.y + self.Bottom_Right_Back.y)/2, self.Top_Left_Front.z),
+                    Point((self.Top_Left_Front.x + self.Bottom_Right_Back.x)/2,
+                          self.Bottom_Right_Back.y, (self.Top_Left_Front.z + self.Bottom_Right_Back.z)/2))
+
+        elif Position == 'BRF':
+            return (Point((self.Top_Left_Front.x + self.Bottom_Right_Back.x)/2, self.Top_Left_Front.y, (self.Top_Left_Front.z + self.Bottom_Right_Back.z)/2),
+                    Point(self.Bottom_Right_Back.x, (self.Top_Left_Front.y +
+                                                     self.Bottom_Right_Back.y)/2, self.Bottom_Right_Back.z))
+
+        elif Position == 'BLF':
+            return (Point(self.Top_Left_Front.x, self.Top_Left_Front.y, (self.Top_Left_Front.z + self.Bottom_Right_Back.z)/2),
+                    Point((self.Top_Left_Front.x + self.Bottom_Right_Back.x)/2,
+                          (self.Top_Left_Front.y + self.Bottom_Right_Back.y)/2, self.Bottom_Right_Back.z))
+
+        elif Position == 'TRF':
+            return (Point((self.Top_Left_Front.x+self.Bottom_Right_Back.x)/2, self.Top_Left_Front.y, self.Top_Left_Front.z), Point(self.Bottom_Right_Back.x, (self.Top_Left_Front.y + self.Bottom_Right_Back.y)/2, (self.Top_Left_Front.z + self.Bottom_Right_Back.z)/2))
+
+        elif Position == 'TRB':
+            return (Point((self.Top_Left_Front.x + self.Bottom_Right_Back.x)/2, (self.Top_Left_Front.y + self.Bottom_Right_Back.y)/2, self.Top_Left_Front.z),
+                    Point(self.Bottom_Right_Back.x, self.Bottom_Right_Back.y,
+                          (self.Top_Left_Front.z + self.Bottom_Right_Back.z)/2))
+
+        elif Position == 'BRB':
+            return (Point((self.Top_Left_Front.x + self.Bottom_Right_Back.x)/2, (self.Top_Left_Front.y + self.Bottom_Right_Back.y)/2, (self.Top_Left_Front.z + self.Bottom_Right_Back.z)/2), self.Bottom_Right_Back)
+
+        elif Position == 'BLB':
+            Point1 = Point(self.Top_Left_Front.x, (self.Top_Left_Front.y +
+                                                   self.Bottom_Right_Back.y)/2, (self.Top_Left_Front.z+self.Bottom_Right_Back.z)/2)
+            Point2 = Point((self.Top_Left_Front.x + self.Bottom_Right_Back.x)/2,
+                           self.Bottom_Right_Back.y, self.Bottom_Right_Back.z)
+            return (Point1, Point2)
+
+    def Add(self, Point1: Point):
+
+        # if parent == None:
+        #     parent = self.Root_Node
 
         # if not check_bounds(Point1, self.Top_Left_Front, self.Bottom_Right_Back):
         #     print("Not in Bounds")
@@ -169,43 +208,45 @@ class Octree:
                     Position = 'TRF'
 
         if (self.Children[Position] != None):
-            if self.Root_Node == None:
+            if self.Children[Position].Root_Node == None:
                 self.Children[Position].Add(Point1)
             else:
                 temp_point: Point = self.Children[Position].Root_Node
                 self.Children[Position].Root_Node = None
 
-                if(Position == 'TLF'):
-                    self.Children[Position] = Octree(
-                        self.Top_Left_Front, Point(Mid_Point_x, Mid_Point_y, Mid_Point_z))
+                Point1, Point2 = self.getRegionLimits(Position)
+                print(Point1.x, Point1.y, Point1.z)
+                print(Point2.x, Point2.y, Point2.z)
+                # if(Position == 'TLF'):
+                self.Children[Position] = Octree(Point1, Point2)
 
-                elif Position == 'TLB':
-                    self.Children[Position] = Octree(Point(Mid_Point_x + 1, self.Top_Left_Front.y, self.Top_Left_Front.z),
-                                                     Point(self.Bottom_Right_Back.x, Mid_Point_y, Mid_Point_z))
+                # elif Position == 'TLB':
+                #     self.Children[Position] = Octree(Point(Mid_Point_x + 1, self.Top_Left_Front.y, self.Top_Left_Front.z),
+                #                                      Point(self.Bottom_Right_Back.x, Mid_Point_y, Mid_Point_z))
 
-                elif Position == 'BRF':
-                    self.Children[Position] = Octree(Point(Mid_Point_x + 1, Mid_Point_y + 1, self.Top_Left_Front.z),
-                                                     Point(self.Bottom_Right_Back.x, self.Bottom_Right_Back.y, Mid_Point_z))
+                # elif Position == 'BRF':
+                #     self.Children[Position] = Octree(Point(Mid_Point_x + 1, Mid_Point_y + 1, self.Top_Left_Front.z),
+                #                                      Point(self.Bottom_Right_Back.x, self.Bottom_Right_Back.y, Mid_Point_z))
 
-                elif Position == 'BLF':
-                    self.Children[Position] = Octree(Point(self.Top_Left_Front.x, Mid_Point_y+1, self.Top_Left_Front.z),
-                                                     Point(Mid_Point_x, self.Bottom_Right_Back.y, Mid_Point_z))
+                # elif Position == 'BLF':
+                #     self.Children[Position] = Octree(Point(self.Top_Left_Front.x, Mid_Point_y+1, self.Top_Left_Front.z),
+                #                                      Point(Mid_Point_x, self.Bottom_Right_Back.y, Mid_Point_z))
 
-                elif Position == 'TLB':
-                    self.Children[Position] = Octree(Point(self.Top_Left_Front.x, self.Top_Left_Front.y, Mid_Point_z + 1),
-                                                     Point(Mid_Point_x, Mid_Point_y, self.Bottom_Right_Back.z))
+                # elif Position == 'TLB':
+                #     self.Children[Position] = Octree(Point(self.Top_Left_Front.x, self.Top_Left_Front.y, Mid_Point_z + 1),
+                #                                      Point(Mid_Point_x, Mid_Point_y, self.Bottom_Right_Back.z))
 
-                elif Position == 'TRB':
-                    self.Children[Position] = Octree(Point(Mid_Point_x + 1, self.Top_Left_Front.y, Mid_Point_z + 1),
-                                                     Point(self.Bottom_Right_Back.x, Mid_Point_y, self.Bottom_Right_Back.z))
+                # elif Position == 'TRB':
+                #     self.Children[Position] = Octree(Point(Mid_Point_x + 1, self.Top_Left_Front.y, Mid_Point_z + 1),
+                #                                      Point(self.Bottom_Right_Back.x, Mid_Point_y, self.Bottom_Right_Back.z))
 
-                elif Position == 'BRB':
-                    self.Children[Position] = Octree(Point(Mid_Point_x + 1, Mid_Point_y+1, Mid_Point_z + 1),
-                                                     Point(self.Bottom_Right_Back.x, self.Bottom_Right_Back.y, self.Bottom_Right_Back.z))
+                # elif Position == 'BRB':
+                #     self.Children[Position] = Octree(Point(Mid_Point_x + 1, Mid_Point_y+1, Mid_Point_z + 1),
+                #                                      Point(self.Bottom_Right_Back.x, self.Bottom_Right_Back.y, self.Bottom_Right_Back.z))
 
-                elif Position == 'BLB':
-                    self.Children[Position] = Octree(Point(self.Top_Left_Front.x, Mid_Point_y+1, Mid_Point_z + 1),
-                                                     Point(Mid_Point_x, self.Bottom_Right_Back.y, self.Bottom_Right_Back.z))
+                # elif Position == 'BLB':
+                #     self.Children[Position] = Octree(Point(self.Top_Left_Front.x, Mid_Point_y+1, Mid_Point_z + 1),
+                #                                      Point(Mid_Point_x, self.Bottom_Right_Back.y, self.Bottom_Right_Back.z))
 
                 self.Children[Position].Add(temp_point)
                 self.Children[Position].Add(Point1)
@@ -230,16 +271,21 @@ def check_bounds(p1: Point, TLF: Point, BRB: Point):
 
 
 def main():
-    m_octree = Octree(Point(4, 0, 0), Point(0, 4, 4))
+    m_octree = Octree(Point(0, 4, 4), Point(4, 0, 0))
     m_octree.Add(Point(0, 0, 4))
     m_octree.Add(Point(0, 0, 0))
     m_octree.Add(Point(0, 4, 0))
     m_octree.Add(Point(4, 4, 0))
     m_octree.Add(Point(4, 0, 4))
     m_octree.Add(Point(4, 4, 4))
+    m_octree.Add(Point(3, 3, 3))
+    m_octree.Add(Point(1, 1, 1))
     # print(m_octree.Root_Node.x, m_octree.Root_Node.y, m_octree.Root_Node.z)
     print(m_octree.Children)
-    print(m_octree.getVertices())
+    # print(m_octree.getVertices())
+    # limit1, limit2 = m_octree.giveRegionLimits("TLF")
+    # print(limit1.x, limit1.y, limit1.z)
+    # print(limit2.x, limit2.y, limit2.z)
 
 
 if __name__ == "__main__":
