@@ -42,8 +42,8 @@ class Octree:
         elif Point_1 != None and Point_2 != None:
             self.Top_Left_Front = Point_1
             self.Bottom_Right_Back = Point_2
-            self.Children["TLF"] = Octree(Point_1)
-            self.Children["BRB"] = Octree(Point_1)
+            # self.Children["TLF"] = Octree(Point_1)
+            # self.Children["BRB"] = Octree(Point_1)
 
         self.Height = 0
         self.Max_Size = 0  # size to not be exceeed
@@ -131,7 +131,10 @@ class Octree:
 
         elif self.Root_Node == None and self.Top_Left_Front and self.Bottom_Right_Back:
             for key in self.Children:
-                vertices += self.Children[key].getVertices()
+                try:
+                    vertices += self.Children[key].getVertices()
+                except:
+                    pass
             return vertices
 
     def getRegionLimits(self, Position: str) -> (Point, Point):
@@ -214,11 +217,11 @@ class Octree:
                 temp_point: Point = self.Children[Position].Root_Node
                 self.Children[Position].Root_Node = None
 
-                Point1, Point2 = self.getRegionLimits(Position)
-                print(Point1.x, Point1.y, Point1.z)
-                print(Point2.x, Point2.y, Point2.z)
+                Point_TLF, Point_BRB = self.getRegionLimits(Position)
+                print(Point_TLF.x, Point_TLF.y, Point_TLF.z)
+                print(Point_BRB.x, Point_BRB.y, Point_BRB.z)
                 # if(Position == 'TLF'):
-                self.Children[Position] = Octree(Point1, Point2)
+                self.Children[Position] = Octree(Point_TLF, Point_BRB)
 
                 # elif Position == 'TLB':
                 #     self.Children[Position] = Octree(Point(Mid_Point_x + 1, self.Top_Left_Front.y, self.Top_Left_Front.z),
@@ -251,7 +254,7 @@ class Octree:
                 self.Children[Position].Add(temp_point)
                 self.Children[Position].Add(Point1)
 
-        if self.Children[Position] == None:
+        elif self.Children[Position] == None:
             self.Children[Position] = Octree(Point1)
 
             # arrived at closest leaf node
@@ -272,17 +275,19 @@ def check_bounds(p1: Point, TLF: Point, BRB: Point):
 
 def main():
     m_octree = Octree(Point(0, 4, 4), Point(4, 0, 0))
+    m_octree.Add(Point(0, 4, 4))
+    m_octree.Add(Point(4, 0, 0))
     m_octree.Add(Point(0, 0, 4))
     m_octree.Add(Point(0, 0, 0))
     m_octree.Add(Point(0, 4, 0))
     m_octree.Add(Point(4, 4, 0))
     m_octree.Add(Point(4, 0, 4))
     m_octree.Add(Point(4, 4, 4))
-    m_octree.Add(Point(3, 3, 3))
+    m_octree.Add(Point(3, 3, 1))
     m_octree.Add(Point(1, 1, 1))
     # print(m_octree.Root_Node.x, m_octree.Root_Node.y, m_octree.Root_Node.z)
-    print(m_octree.Children)
-    # print(m_octree.getVertices())
+    #print(m_octree.Children)
+    print(m_octree.getVertices())
     # limit1, limit2 = m_octree.giveRegionLimits("TLF")
     # print(limit1.x, limit1.y, limit1.z)
     # print(limit2.x, limit2.y, limit2.z)
