@@ -1,3 +1,9 @@
+import sys
+import random
+
+sys.setrecursionlimit(10**6)
+
+
 class Node:
 
     def __init__(self, Point1, Point2, Data=None, Render=True):
@@ -169,23 +175,23 @@ class Octree:
 
         elif Position == 'BLB':
             Point1 = Point(self.Top_Left_Front.x, (self.Top_Left_Front.y +
-                                                   self.Bottom_Right_Back.y)/2, (self.Top_Left_Front.z+self.Bottom_Right_Back.z)/2)
+                                                   self.Bottom_Right_Back.y)/2, (self.Top_Left_Front.z + self.Bottom_Right_Back.z)/2)
             Point2 = Point((self.Top_Left_Front.x + self.Bottom_Right_Back.x)/2,
                            self.Bottom_Right_Back.y, self.Bottom_Right_Back.z)
             return (Point1, Point2)
 
-    def Add(self, Point1: Point):
+    def Add(self, Point1: Point, parent=False):
 
         # if parent == None:
         #     parent = self.Root_Node
 
-        # if not check_bounds(Point1, self.Top_Left_Front, self.Bottom_Right_Back):
-        #     print("Not in Bounds")
-        #     return False
+        if parent and not check_bounds(Point1, self.Top_Left_Front, self.Bottom_Right_Back):
+            print("Not in Bounds")
+            return False
 
-        Mid_Point_x = (self.Top_Left_Front.x + self.Bottom_Right_Back.x) // 2
-        Mid_Point_y = (self.Top_Left_Front.y + self.Bottom_Right_Back.y) // 2
-        Mid_Point_z = (self.Top_Left_Front.z + self.Bottom_Right_Back.z) // 2
+        Mid_Point_x = (self.Top_Left_Front.x + self.Bottom_Right_Back.x) / 2
+        Mid_Point_y = (self.Top_Left_Front.y + self.Bottom_Right_Back.y) / 2
+        Mid_Point_z = (self.Top_Left_Front.z + self.Bottom_Right_Back.z) / 2
 
         if (Point1.x <= Mid_Point_x):
             if(Point1.y <= Mid_Point_y):
@@ -218,8 +224,8 @@ class Octree:
                 self.Children[Position].Root_Node = None
 
                 Point_TLF, Point_BRB = self.getRegionLimits(Position)
-                print(Point_TLF.x, Point_TLF.y, Point_TLF.z)
-                print(Point_BRB.x, Point_BRB.y, Point_BRB.z)
+                # print(Point_TLF.x, Point_TLF.y, Point_TLF.z)
+                # print(Point_BRB.x, Point_BRB.y, Point_BRB.z)
                 # if(Position == 'TLF'):
                 self.Children[Position] = Octree(Point_TLF, Point_BRB)
 
@@ -274,20 +280,61 @@ def check_bounds(p1: Point, TLF: Point, BRB: Point):
 
 
 def main():
-    m_octree = Octree(Point(0, 4, 4), Point(4, 0, 0))
-    m_octree.Add(Point(0, 4, 4))
-    m_octree.Add(Point(4, 0, 0))
-    m_octree.Add(Point(0, 0, 4))
-    m_octree.Add(Point(0, 0, 0))
-    m_octree.Add(Point(0, 4, 0))
-    m_octree.Add(Point(4, 4, 0))
-    m_octree.Add(Point(4, 0, 4))
-    m_octree.Add(Point(4, 4, 4))
-    m_octree.Add(Point(3, 3, 1))
-    m_octree.Add(Point(1, 1, 1))
+
+    with open("obj\\bugatti.obj", "r") as file1:
+        # file2 = open("Point_cloud.txt", "a")
+
+        vertices = []
+        faces = []
+
+        for line in file1.readlines():
+            if line[0:2] == "v ":
+                line = line.split()
+                v_tuple = (float(line[1]), float(line[2]), float(line[3]))
+                vertices.append(v_tuple)
+            if line[0:2] == "f ":
+                face_tuple = list()
+                line = line.split()
+                for element in line[1:]:
+                    element = element.split("/")
+                    face_tuple.append(int(element[0]))
+                face_tuple = tuple(face_tuple)
+                faces.append(face_tuple)
+    # print(len(vertices))
+    # random.shuffle(vertices)
+    m_octree = Octree(Point(-10, 10, 10), Point(10, -10, -10))
+    j = 0
+    for i in vertices:
+        try:
+            m_octree.Add(Point(i[0], i[1], i[2]), True)
+            j += 1
+        except:
+            print(j)
+        # print("vertex:", i[0], i[1], i[2])
+    print("Bugatti Loaded")
+    vertices1 = m_octree.getVertices()
+    mymesh = bpy.data.meshes.new("Abbu")
+    myobj = bpy.data.objects.new("Abbu", mymesh)
+
+    myobj.location = bpy.context.scene.cursor.location
+    bpy.context.collection.objects.link(myobj)
+
+    mymesh.from_pydata(vertices1, [], [])
+    mymesh.update(calc_edges=True)
+
+    # m_octree.Add(Point(0, 4, 4))
+    # m_octree.Add(Point(4, 0, 0))
+    # m_octree.Add(Point(0, 0, 4))
+    # m_octree.Add(Point(0, 0, 0))
+    # m_octree.Add(Point(0, 4, 0))
+    # m_octree.Add(Point(4, 4, 0))
+    # m_octree.Add(Point(4, 0, 4))
+    # m_octree.Add(Point(4, 4, 4))
+    # m_octree.Add(Point(3, 3, 1))
+    # m_octree.Add(Point(1, 1, 1))
     # print(m_octree.Root_Node.x, m_octree.Root_Node.y, m_octree.Root_Node.z)
-    #print(m_octree.Children)
-    print(m_octree.getVertices())
+    # print(m_octree.Children)
+    # print(m_octree.getVertices())
     # limit1, limit2 = m_octree.giveRegionLimits("TLF")
     # print(limit1.x, limit1.y, limit1.z)
     # print(limit2.x, limit2.y, limit2.z)
