@@ -1,7 +1,7 @@
 import sys
 import random
 
-sys.setrecursionlimit(10**6)
+sys.setrecursionlimit(10**8)
 
 
 class Node:
@@ -30,8 +30,13 @@ class Point:
 
 
 class Octree:
-    def __init__(self, Point_1=None, Point_2=None):
 
+    max_depth = 10
+    number_of_cubes = 0
+
+    def __init__(self, Point_1=None, Point_2=None, level=-1):
+        self.level = level + 1
+        Octree.number_of_cubes += 1
         self.Children = {'TLF': None, 'TRF': None, 'BRF': None, 'BLF': None, 'TLB': None, 'TRB': None,
                          'BRB': None, 'BLB': None}
 
@@ -181,12 +186,14 @@ class Octree:
             return (Point1, Point2)
 
     def Add(self, Point1: Point, parent=False):
+        if Point1 == None:
+            print("None encountered")
 
-        # if parent == None:
-        #     parent = self.Root_Node
+            # if parent == None:
+            #     parent = self.Root_Node
 
         if parent and not check_bounds(Point1, self.Top_Left_Front, self.Bottom_Right_Back):
-            print("Not in Bounds")
+            # print("Not in Bounds")
             return False
 
         Mid_Point_x = (self.Top_Left_Front.x + self.Bottom_Right_Back.x) / 2
@@ -227,7 +234,11 @@ class Octree:
                 # print(Point_TLF.x, Point_TLF.y, Point_TLF.z)
                 # print(Point_BRB.x, Point_BRB.y, Point_BRB.z)
                 # if(Position == 'TLF'):
-                self.Children[Position] = Octree(Point_TLF, Point_BRB)
+                if self.level == Octree.max_depth:
+                    return
+                else:
+                    self.Children[Position] = Octree(
+                        Point_TLF, Point_BRB, level=self.level)
 
                 # elif Position == 'TLB':
                 #     self.Children[Position] = Octree(Point(Mid_Point_x + 1, self.Top_Left_Front.y, self.Top_Left_Front.z),
@@ -267,8 +278,8 @@ class Octree:
 
         # add node how
 
-
 ####### Helper Functions #######
+
 
 def check_bounds(p1: Point, TLF: Point, BRB: Point):
     if ((p1.x < TLF.x or p1.x > BRB.x) or
@@ -302,25 +313,29 @@ def main():
                 faces.append(face_tuple)
     # print(len(vertices))
     # random.shuffle(vertices)
-    m_octree = Octree(Point(-10, 10, 10), Point(10, -10, -10))
+    m_octree = Octree(Point(-10, +10, +10),
+                      Point(+10, -+10, +-10))
     j = 0
     for i in vertices:
-        try:
-            m_octree.Add(Point(i[0], i[1], i[2]), True)
-            j += 1
-        except:
-            print(j)
+        # try:
+        m_octree.Add(Point(i[0], i[1], i[2]), True)
+        if j % 100 == 0:
+            print("Number of cubes:", Octree.number_of_cubes)
+    # except Exception as e:
+        # print(e)
         # print("vertex:", i[0], i[1], i[2])
-    print("Bugatti Loaded")
+    # print("Bugatti Loaded")
     vertices1 = m_octree.getVertices()
-    mymesh = bpy.data.meshes.new("Abbu")
-    myobj = bpy.data.objects.new("Abbu", mymesh)
+    print("NUmber of vertices:", len(vertices1))
+    print("Number of cubes: ", Octree.number_of_cubes)
+    # mymesh = bpy.data.meshes.new("Abbu")
+    # myobj = bpy.data.objects.new("Abbu", mymesh)
 
-    myobj.location = bpy.context.scene.cursor.location
-    bpy.context.collection.objects.link(myobj)
+    # myobj.location = bpy.context.scene.cursor.location
+    # bpy.context.collection.objects.link(myobj)
 
-    mymesh.from_pydata(vertices1, [], [])
-    mymesh.update(calc_edges=True)
+    # mymesh.from_pydata(vertices1, [], [])
+    # mymesh.update(calc_edges=True)
 
     # m_octree.Add(Point(0, 4, 4))
     # m_octree.Add(Point(4, 0, 0))
