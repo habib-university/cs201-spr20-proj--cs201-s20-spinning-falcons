@@ -23,10 +23,11 @@ class Node:
 
 class Point:
 
-    def __init__(self, x=None, y=None, z=None):
+    def __init__(self, x=None, y=None, z=None, faces=None):
         self.x = x
         self.y = y
         self.z = z
+        self.in_faces = faces
 
 
 class Octree:
@@ -48,7 +49,7 @@ class Octree:
             self.Root_Node = Point()
 
         elif Point_2 == None and Point_1 != None:
-            self.Root_Node = Point(Point_1.x, Point_1.y, Point_1.z)
+            self.Root_Node = Point_1
 
         elif Point_1 != None and Point_2 != None:
             self.Top_Left_Front = Point_1
@@ -132,21 +133,24 @@ class Octree:
 
         pass
 
-    def getVertices(self):
+    def getVertices_Faces(self):
         vertices = []
+        faces = []
         if self.Root_Node == None and self.Root_Node == (None, None, None):
             return vertices
 
         elif type(self.Root_Node) == Point:
-            return [(self.Root_Node.x, self.Root_Node.y, self.Root_Node.z)]
+            return [(self.Root_Node.x, self.Root_Node.y, self.Root_Node.z)], [self.Root_Node.in_faces]
 
         elif self.Root_Node == None and self.Top_Left_Front and self.Bottom_Right_Back:
             for key in self.Children:
                 try:
-                    vertices += self.Children[key].getVertices()
+                    v, f = self.Children[key].getVertices_Faces()
+                    vertices += v
+                    faces += f
                 except:
                     pass
-            return vertices
+            return vertices, faces
 
     def getRegionLimits(self, Position: str) -> (Point, Point):
         if(Position == 'TLF'):
@@ -186,11 +190,11 @@ class Octree:
             return (Point1, Point2)
 
     def Add(self, Point1: Point, parent=False):
-        if Point1 == None:
-            print("None encountered")
+        # if Point1 == None:
+        # print("None encountered")
 
-            # if parent == None:
-            #     parent = self.Root_Node
+        # if parent == None:
+        #     parent = self.Root_Node
 
         if parent and not check_bounds(Point1, self.Top_Left_Front, self.Bottom_Right_Back):
             # print("Not in Bounds")
@@ -231,14 +235,16 @@ class Octree:
                 self.Children[Position].Root_Node = None
 
                 Point_TLF, Point_BRB = self.getRegionLimits(Position)
-                # print(Point_TLF.x, Point_TLF.y, Point_TLF.z)
-                # print(Point_BRB.x, Point_BRB.y, Point_BRB.z)
-                # if(Position == 'TLF'):
+
                 if self.level == Octree.max_depth:
+                    self.Children[Position].Root_Node = temp_point
                     return
                 else:
                     self.Children[Position] = Octree(
                         Point_TLF, Point_BRB, level=self.level)
+                # print(Point_TLF.x, Point_TLF.y, Point_TLF.z)
+                # print(Point_BRB.x, Point_BRB.y, Point_BRB.z)
+                # if(Position == 'TLF'):
 
                 # elif Position == 'TLB':
                 #     self.Children[Position] = Octree(Point(Mid_Point_x + 1, self.Top_Left_Front.y, self.Top_Left_Front.z),
@@ -292,7 +298,7 @@ def check_bounds(p1: Point, TLF: Point, BRB: Point):
 
 def main():
 
-    with open("obj\\bugatti.obj", "r") as file1:
+    with open("obj\\airboat.obj", "r") as file1:
         # file2 = open("Point_cloud.txt", "a")
 
         vertices = []
@@ -301,7 +307,7 @@ def main():
         for line in file1.readlines():
             if line[0:2] == "v ":
                 line = line.split()
-                v_tuple = (float(line[1]), float(line[2]), float(line[3]))
+                v_tuple = (float(line[1]), float(line[2]), float(line[3]), [])
                 vertices.append(v_tuple)
             if line[0:2] == "f ":
                 face_tuple = list()
@@ -310,6 +316,8 @@ def main():
                     element = element.split("/")
                     face_tuple.append(int(element[0]))
                 face_tuple = tuple(face_tuple)
+                for i in face_tuple:
+                    vertices[i-1][3].append(len(faces))
                 faces.append(face_tuple)
     # print(len(vertices))
     # random.shuffle(vertices)
@@ -318,16 +326,28 @@ def main():
     j = 0
     for i in vertices:
         # try:
-        m_octree.Add(Point(i[0], i[1], i[2]), True)
-        if j % 100 == 0:
-            print("Number of cubes:", Octree.number_of_cubes)
+        m_octree.Add(Point(i[0], i[1], i[2], i[3]), True)
+        # if j % 100 == 0:
+        #     print("Number of cubes:", Octree.number_of_cubes)
     # except Exception as e:
         # print(e)
         # print("vertex:", i[0], i[1], i[2])
     # print("Bugatti Loaded")
-    vertices1 = m_octree.getVertices()
-    print("NUmber of vertices:", len(vertices1))
-    print("Number of cubes: ", Octree.number_of_cubes)
+    vertices1, faces1 = m_octree.getVertices_Faces()
+    print(len(vertices1) == len(faces1))
+    face_dict = dict()
+    faces = []
+    for ver_in_faces in range(len(faces1)):
+        for face in faces1[ver_in_faces]:
+            if not face_dict.get(face):
+                face_dict[face] = (ver_in_faces,)
+            else:
+                face_dict[face] = face_dict[face] + (ver_in_faces,)
+    for key in face_dict:
+        faces.append(tuple(face_dict[key]))
+
+    # print("NUmber of vertices:", len(vertices1))
+    # print("Number of cubes: ", Octree.number_of_cubes)
     # mymesh = bpy.data.meshes.new("Abbu")
     # myobj = bpy.data.objects.new("Abbu", mymesh)
 
@@ -336,6 +356,9 @@ def main():
 
     # mymesh.from_pydata(vertices1, [], [])
     # mymesh.update(calc_edges=True)
+
+    # values = [True] * len(mymesh.polygons)
+    # mymesh.polygons.foreach_set("use_smooth", values)
 
     # m_octree.Add(Point(0, 4, 4))
     # m_octree.Add(Point(4, 0, 0))
